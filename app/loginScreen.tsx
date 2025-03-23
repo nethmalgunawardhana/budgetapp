@@ -93,9 +93,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     navigation.navigate('SignUp');
   };
 
-  const navigateToForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
-  };
+ 
 
   return (
     <SafeAreaView style={styles.container}>
