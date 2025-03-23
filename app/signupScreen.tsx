@@ -134,7 +134,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
                 disabled={loading}
               >
                 <Image 
-                  source={require('../assets/google-icon.png')} 
+                  source={require('../assets/images/google-icon.png')} 
                   style={styles.googleIcon} 
                 />
                 <Text style={styles.googleButtonText}>
