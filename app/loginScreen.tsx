@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, TextInput, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  SafeAreaView, 
+  Image, 
+  TextInput, 
+  ActivityIndicator,
+  Alert
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-
-// You'll need to install these packages:
-// expo install expo-auth-session expo-web-browser
+import { AuthService } from '../services/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,25 +34,26 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   React.useEffect(() => {
     if (response?.type === 'success') {
-      setLoading(true);
-      const { authentication } = response;
-      // Handle authentication here
-      console.log(authentication);
-      // Navigate to home screen or handle user data
-      setTimeout(() => {
-        setLoading(false);
-        navigation.replace('Home');
-      }, 1000);
+      handleGoogleSignIn(response.authentication?.accessToken);
     }
   }, [response]);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (googleToken?: string) => {
+    if (!googleToken) {
+      Alert.alert('Error', 'Failed to obtain Google token');
+      return;
+    }
+
     setLoading(true);
     try {
-      await promptAsync();
-    } catch (error) {
-      console.error('Google Sign-In Error:', error);
-      setErrorMessage('Failed to sign in with Google. Please try again.');
+      await AuthService.googleSignIn(googleToken);
+      navigation.replace('Home');
+    } catch (error: any) {
+      setErrorMessage(
+        error.response?.data?.message || 
+        'Failed to sign in with Google. Please try again.'
+      );
+      Alert.alert('Google Sign-In Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -70,20 +79,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     setLoading(true);
     
     try {
-      // Here you would implement your authentication logic
-      // This is a placeholder for demonstration purposes
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo, let's pretend login was successful
-      // In a real app, you would verify credentials with your backend
-      
-      // Navigate to home on success
+      await AuthService.login({ email, password });
       navigation.replace('Home');
-    } catch (error) {
-      console.error('Login Error:', error);
-      setErrorMessage('Invalid email or password. Please try again.');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
+      setErrorMessage(errorMsg);
+      Alert.alert('Login Error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     navigation.navigate('SignUp');
   };
 
- 
+  const initiateGoogleSignIn = async () => {
+    try {
+      await promptAsync();
+    } catch (error) {
+      console.error('Google Sign-In Initiation Error:', error);
+      Alert.alert('Error', 'Failed to initiate Google Sign-In');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -125,8 +133,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             <Text style={styles.errorText}>{errorMessage}</Text>
           ) : null}
           
-          
-          
           <TouchableOpacity 
             style={styles.loginButton}
             onPress={handleEmailLogin}
@@ -149,7 +155,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.googleButton}
-            onPress={handleGoogleSignIn}
+            onPress={initiateGoogleSignIn}
             disabled={loading}
           >
             <Image 
