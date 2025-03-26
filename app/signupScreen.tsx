@@ -9,11 +9,13 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { AuthService } from '../services/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,6 +28,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: '893168900765-3jn1873ktv7sq6niq0ld8ta76per050p.apps.googleusercontent.com',
@@ -34,38 +37,74 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
 
   React.useEffect(() => {
     if (response?.type === 'success') {
-      setLoading(true);
-      const { authentication } = response;
-      // Handle authentication here
-      console.log(authentication);
-      // Navigate to home screen or handle user data
-      setTimeout(() => {
-        setLoading(false);
-        navigation.replace('Home');
-      }, 1000);
+      handleGoogleSignUp(response.authentication?.accessToken);
     }
   }, [response]);
 
-  const handleSignUp = () => {
+  const handleGoogleSignUp = async (googleToken?: string) => {
+    if (!googleToken) {
+      Alert.alert('Error', 'Failed to obtain Google token');
+      return;
+    }
+
     setLoading(true);
-    // Handle email/password sign up logic here
-    console.log('Sign up with:', { name, email, password });
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await AuthService.googleSignIn(googleToken);
       navigation.replace('Home');
-    }, 1500);
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 
+        'Failed to sign up with Google. Please try again.';
+      setErrorMessage(errorMsg);
+      Alert.alert('Google Sign-Up Error', errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleSignUp = async () => {
+    // Reset error message
+    setErrorMessage('');
+    
+    // Basic validation
+    if (!name || !email || !password) {
+      setErrorMessage('Please fill in all fields');
+      return;
+    }
+    
+    // Email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setErrorMessage('Please enter a valid email address');
+      return;
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
+    
+    try {
+      await AuthService.register({ name, email, password });
+      navigation.replace('Login');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 
+        'Sign up failed. Please try again.';
+      setErrorMessage(errorMsg);
+      Alert.alert('Sign Up Error', errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initiateGoogleSignUp = async () => {
     try {
       await promptAsync();
     } catch (error) {
-      console.error('Google Sign-Up Error:', error);
-    } finally {
-      setLoading(false);
+      console.error('Google Sign-Up Initiation Error:', error);
+      Alert.alert('Error', 'Failed to initiate Google Sign-Up');
     }
   };
 
@@ -112,6 +151,10 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
                 secureTextEntry
               />
               
+              {errorMessage ? (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              ) : null}
+              
               <TouchableOpacity 
                 style={styles.signUpButton}
                 onPress={handleSignUp}
@@ -130,11 +173,11 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
               
               <TouchableOpacity 
                 style={styles.googleButton}
-                onPress={handleGoogleSignUp}
+                onPress={initiateGoogleSignUp}
                 disabled={loading}
               >
                 <Image 
-                  source={require('../assets/google-icon.png')} 
+                  source={require('../assets/images/google-icon.png')} 
                   style={styles.googleIcon} 
                 />
                 <Text style={styles.googleButtonText}>
@@ -265,9 +308,15 @@ const styles = StyleSheet.create({
       color: 'rgba(255, 255, 255, 0.7)',
       fontSize: 15,
     },
-    loginBold: {
+  loginBold: {
       color: 'white',
       fontWeight: '600',
+    },
+  errorText: {
+      color: 'red',
+      fontSize: 14,
+      marginBottom: 10,
+      textAlign: 'center',
     },
   });
   export default SignUpScreen;
