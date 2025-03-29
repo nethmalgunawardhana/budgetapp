@@ -149,78 +149,88 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
                     <View style={{ width: 24 }} />
                   </View>
                   
-                  <View style={styles.customCategoryForm}>
-                    {/* Custom category name input */}
-                    <View style={styles.formField}>
-                      <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
-                      <TextInput
-                        style={styles.fieldValue}
-                        value={customCategoryName}
-                        onChangeText={setCustomCategoryName}
-                        placeholder="Enter category name"
-                        placeholderTextColor="#9E9EA7"
-                      />
-                      <View style={styles.fieldUnderline} />
-                    </View>
-                    
-                    {/* Icon selection */}
-                    <View style={styles.formField}>
-                      <Text style={styles.fieldLabel}>SELECT ICON</Text>
-                      <View style={styles.iconGrid}>
-                        {availableIcons.map((icon, index) => (
-                          <TouchableOpacity 
-                            key={index}
-                            style={[
-                              styles.iconOption,
-                              customCategoryIcon === icon && styles.selectedIconOption
-                            ]}
-                            onPress={() => setCustomCategoryIcon(icon)}
-                          >
-                            <Text style={styles.iconOptionText}>{icon}</Text>
-                          </TouchableOpacity>
-                        ))}
+                  <ScrollView 
+                    style={styles.customFormScrollContainer}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                   bounces={true}
+                   >
+                    <View style={styles.customCategoryForm}>
+                      {/* Custom category name input */}
+                      <View style={styles.formField}>
+                        <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
+                        <TextInput
+                          style={styles.fieldValue}
+                          value={customCategoryName}
+                          onChangeText={setCustomCategoryName}
+                          placeholder="Enter category name"
+                          placeholderTextColor="#9E9EA7"
+                        />
+                        <View style={styles.fieldUnderline} />
                       </View>
-                    </View>
-                    
-                    {/* Color selection */}
-                    <View style={styles.formField}>
-                      <Text style={styles.fieldLabel}>SELECT COLOR</Text>
-                      <View style={styles.colorGrid}>
-                        {availableColors.map((color, index) => (
-                          <TouchableOpacity 
-                            key={index}
-                            style={[
-                              styles.colorOption,
-                              { backgroundColor: color },
-                              selectedColor === color && styles.selectedColorOption
-                            ]}
-                            onPress={() => setSelectedColor(color)}
-                          />
-                        ))}
-                      </View>
-                    </View>
-                    
-                    {/* Preview */}
-                    <View style={styles.previewContainer}>
-                      <Text style={styles.fieldLabel}>PREVIEW</Text>
-                      <View style={styles.previewContent}>
-                        <View style={[styles.iconContainer, { backgroundColor: selectedColor }]}>
-                          <Text style={styles.iconText}>{customCategoryIcon}</Text>
+                      
+                      {/* Icon selection */}
+                      <View style={styles.formField}>
+                        <Text style={styles.fieldLabel}>SELECT ICON</Text>
+                        <View style={styles.iconGrid}>
+                          {availableIcons.map((icon, index) => (
+                            <TouchableOpacity 
+                              key={index}
+                              style={[
+                                styles.iconOption,
+                                customCategoryIcon === icon && styles.selectedIconOption
+                              ]}
+                              onPress={() => setCustomCategoryIcon(icon)}
+                            >
+                              <Text style={styles.iconOptionText}>{icon}</Text>
+                            </TouchableOpacity>
+                          ))}
                         </View>
-                        <Text style={styles.categoryName}>
-                          {customCategoryName || 'Category Name'}
-                        </Text>
                       </View>
+                      
+                      {/* Color selection */}
+                      <View style={styles.formField}>
+                        <Text style={styles.fieldLabel}>SELECT COLOR</Text>
+                        <View style={styles.colorGrid}>
+                          {availableColors.map((color, index) => (
+                            <TouchableOpacity 
+                              key={index}
+                              style={[
+                                styles.colorOption,
+                                { backgroundColor: color },
+                                selectedColor === color && styles.selectedColorOption
+                              ]}
+                              onPress={() => setSelectedColor(color)}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                      
+                      {/* Preview */}
+                      <View style={styles.previewContainer}>
+                        <Text style={styles.fieldLabel}>PREVIEW</Text>
+                        <View style={styles.previewContent}>
+                          <View style={[styles.iconContainer, { backgroundColor: selectedColor }]}>
+                            <Text style={styles.iconText}>{customCategoryIcon}</Text>
+                          </View>
+                          <Text style={styles.categoryName}>
+                            {customCategoryName || 'Category Name'}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {/* Add button */}
+                      <TouchableOpacity 
+                        style={styles.addButton}
+                        onPress={handleAddCustomCategory}
+                      >
+                        <Text style={styles.addButtonText}>Add Category</Text>
+                      </TouchableOpacity>
+                      
+                      {/* Add padding at the bottom for better scrolling experience */}
+                      <View style={styles.bottomPadding} />
                     </View>
-                    
-                    {/* Add button */}
-                    <TouchableOpacity 
-                      style={styles.addButton}
-                      onPress={handleAddCustomCategory}
-                    >
-                      <Text style={styles.addButtonText}>Add Category</Text>
-                    </TouchableOpacity>
-                  </View>
+                  </ScrollView>
                 </>
               )}
             </View>
@@ -244,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
     paddingTop: 20,
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
@@ -287,7 +297,10 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     marginBottom: 20,
-    maxHeight: 300,
+    maxHeight: 400,
+  },
+  customFormScrollContainer: {
+    flexGrow: 0,
   },
   mainCategoryItem: {
     flexDirection: 'row',
@@ -313,7 +326,7 @@ const styles = StyleSheet.create({
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -323,7 +336,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 8,
   },
   iconText: {
     color: 'white',
@@ -347,7 +360,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   customCategoryForm: {
-    paddingTop: 10,
+    flexGrow: 1,
+    maxHeight: '90%',
   },
   formField: {
     marginBottom: 25,
@@ -379,7 +393,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A3C',
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 8,
+    margin: 5,
   },
   selectedIconOption: {
     borderWidth: 2,
@@ -397,7 +411,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    margin: 8,
+    margin: 5,
   },
   selectedColorOption: {
     borderWidth: 3,
@@ -425,6 +439,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  bottomPadding: {
+    height: 30
   }
 });
 

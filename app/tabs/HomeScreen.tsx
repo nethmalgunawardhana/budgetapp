@@ -134,9 +134,11 @@ const TransactionCard = ({ item }: { item: Transaction }) => {
         </View>
         <View style={styles.transactionInfo}>
           <Text style={styles.transactionName}>{item.category}</Text>
+          
           <Text style={styles.transactionDate}>
             {formatDate(item.createdAt || new Date())}
           </Text>
+          <Text style = {styles.transactionDate}>{item.description}</Text>
         </View>
       </View>
       <Text style={[
