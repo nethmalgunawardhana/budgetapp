@@ -269,13 +269,14 @@ const styles = StyleSheet.create({
     color: '#212121',
   },
   pickerContainer: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
     overflow: 'hidden',
   },
   picker: {
-    height: 44,
+    height: 60,
     width: '100%',
   },
   resultCount: {
