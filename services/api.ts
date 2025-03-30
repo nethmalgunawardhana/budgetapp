@@ -140,29 +140,11 @@ export const AuthService = {
     }
   },
 
-  async uploadServiceProviderDocuments(formData: FormData) {
-    try {
-      const response = await api.post('/service-providers/documents', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
 
   // Common authentication methods
   async logout() {
     try {
       const userType = await AsyncStorage.getItem('userType');
-      // Optional: Call backend logout endpoint if needed
-      if (userType === 'serviceProvider') {
-        await api.post('/auth/service-provider/logout');
-      } else {
-        await api.post('/auth/logout');
-      }
       
       // Clear all auth-related storage
       await AsyncStorage.removeItem('accessToken');
@@ -219,70 +201,5 @@ export const AuthService = {
   }
 };
 
-// Service provider specific services
-export const ServiceProviderService = {
-  async getJobs() {
-    try {
-      const response = await api.get('/service-providers/jobs');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async getJobById(jobId: string) {
-    try {
-      const response = await api.get(`/service-providers/jobs/${jobId}`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async acceptJob(jobId: string) {
-    try {
-      const response = await api.post(`/service-providers/jobs/${jobId}/accept`);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async declineJob(jobId: string, reason: string) {
-    try {
-      const response = await api.post(`/service-providers/jobs/${jobId}/decline`, { reason });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async completeJob(jobId: string, notes: string) {
-    try {
-      const response = await api.post(`/service-providers/jobs/${jobId}/complete`, { notes });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async updateAvailability(availability: object) {
-    try {
-      const response = await api.put('/service-providers/availability', { availability });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-  
-  async getDashboardStats() {
-    try {
-      const response = await api.get('/service-providers/dashboard');
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-};
 
 export default api;
