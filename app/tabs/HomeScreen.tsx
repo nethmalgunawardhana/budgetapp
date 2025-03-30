@@ -331,7 +331,6 @@ const HomeScreen = () => {
         <View style={styles.userInfoContainer}>
           <Text style={styles.headerTitle}>Hi Welcome,</Text>
           <Text style={styles.headerTitle}>{username}</Text>
-          <Text style={styles.userEmail}>{email}</Text>
         </View>
         <View style={{ width: 24 }} />
       </View>

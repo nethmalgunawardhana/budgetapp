@@ -44,8 +44,9 @@ export const AuthService = {
   // Regular user authentication methods
   async register(data: UserRegisterData) {
     try {
+      console.log(data); // Debugging line
       const response = await api.post('/auth/register', data);
-      
+      console.log(response.data.tokens.refreshToken, response.data.tokens.refreshToken ); // Debugging line
       // Store tokens
       await AsyncStorage.setItem('accessToken', response.data.tokens.accessToken);
       await AsyncStorage.setItem('refreshToken', response.data.tokens.refreshToken);
@@ -60,13 +61,14 @@ export const AuthService = {
   async login(data: LoginData) {
     try {
       const response = await api.post('/auth/login', data);
-      
+      console.log(response.data.tokens.refreshToken, response.data.tokens.refreshToken ); // Debugging line
       // Store tokens
       await AsyncStorage.setItem('accessToken', response.data.tokens.accessToken);
       await AsyncStorage.setItem('refreshToken', response.data.tokens.refreshToken);
       await AsyncStorage.setItem('userType', 'user');
       
       return response.data;
+       
     } catch (error) {
       throw error;
     }
@@ -90,10 +92,23 @@ export const AuthService = {
   // Service provider authentication methods
   async serviceProviderSignUp(data: ServiceProviderRegisterData) {
     try {
+      console.log(data); // Debugging line
       const response = await api.post('/auth/service-provider/register', data);
       
-      // Don't store tokens yet as service providers might need approval
+      console.log(response.data.tokens.refreshToken, response.data.tokens.refreshToken ); // Debugging line
+      // Store tokens
+      await AsyncStorage.setItem('accessToken', response.data.tokens.accessToken);
+      await AsyncStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+      await AsyncStorage.setItem('userType', 'serviceProvider');
+      if (response.data.serviceType) {
+        await AsyncStorage.setItem('serviceType', response.data.serviceType);
+      } else {
+        // Store the service type from the registration data instead
+        await AsyncStorage.setItem('serviceType', data.serviceType);
+      }
+      console.log(response.data); // Debugging line
       return response.data;
+    
     } catch (error) {
       throw error;
     }
@@ -107,7 +122,6 @@ export const AuthService = {
       await AsyncStorage.setItem('accessToken', response.data.tokens.accessToken);
       await AsyncStorage.setItem('refreshToken', response.data.tokens.refreshToken);
       await AsyncStorage.setItem('userType', 'serviceProvider');
-      await AsyncStorage.setItem('serviceType', response.data.serviceType);
       
       return response.data;
     } catch (error) {
@@ -200,6 +214,7 @@ export const AuthService = {
     }
   }
 };
+
 
 
 export default api;

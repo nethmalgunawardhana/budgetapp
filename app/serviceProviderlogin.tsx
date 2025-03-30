@@ -89,8 +89,11 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
     try {
       // Use a different login method for service providers
       await AuthService.serviceProviderLogin({ email, password });
-      navigation.replace('ServiceProviderDashboard');
+      console.log('Login successful!');
+      // Navigate to the service provider dashboard 
+      navigation.navigate('ServiceProviderDashboard');
     } catch (error: any) {
+      console.error('Login error:', error);
       const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
       setErrorMessage(errorMsg);
       Alert.alert('Login Error', errorMsg);

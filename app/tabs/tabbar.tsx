@@ -4,14 +4,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Svg, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from './HomeScreen';
-
+import ServicePostsScreen from './servicepostScreen';
 // You'll need to install these packages:
 // npm install @react-navigation/bottom-tabs react-native-svg react-native-safe-area-context
 
 // Example screen components
 
 const AnalyticsScreen = () => <View style={styles.screen}><Text>Analytics Screen</Text></View>;
-const PropertyScreen = () => <View style={styles.screen}><Text>Property Screen</Text></View>;
+
 const ProfileScreen = () => <View style={styles.screen}><Text>Profile Screen</Text></View>;
 
 const Tab = createBottomTabNavigator();
@@ -149,7 +149,7 @@ export default function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-      <Tab.Screen name="Property" component={PropertyScreen} />
+      <Tab.Screen name="Serviceposts" component={ServicePostsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

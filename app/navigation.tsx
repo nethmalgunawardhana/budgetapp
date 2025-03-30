@@ -5,6 +5,7 @@ import SignUpScreen from './signupScreen';
 import TabNavigator from './tabs/tabbar';
 import ServiceProviderLoginScreen from './serviceProviderlogin';
 import ServiceProviderSignupScreen from './serviceProviderregister';
+import ServiceProviderDashboardScreen from './sDashboard';
 
 const Stack = createStackNavigator();
 const NewStack=()=>{
@@ -16,6 +17,7 @@ const NewStack=()=>{
         <Stack.Screen name="Home" component={TabNavigator} />
         <Stack.Screen name="ServiceProviderLogin" component={ServiceProviderLoginScreen} />
         <Stack.Screen name="ServiceProviderSignUp" component={ServiceProviderSignupScreen} />
+        <Stack.Screen name="ServiceProviderDashboard" component={ServiceProviderDashboardScreen} />
            
         </Stack.Navigator>
     );

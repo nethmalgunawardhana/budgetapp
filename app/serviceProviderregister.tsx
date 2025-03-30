@@ -132,6 +132,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
         [{ text: 'OK', onPress: () => navigation.navigate('ServiceProviderLogin') }]
       );
     } catch (error: any) {
+       console.error('Registration error:', error); 
       const errorMsg = error.response?.data?.message || 'Registration failed. Please try again.';
       setErrorMessage(errorMsg);
       Alert.alert('Registration Error', errorMsg);
