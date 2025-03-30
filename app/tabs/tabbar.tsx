@@ -5,6 +5,7 @@ import { Svg, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from './HomeScreen';
 import ServicePostsScreen from './servicepostScreen';
+import ProfileScreen from './profileScreen';
 // You'll need to install these packages:
 // npm install @react-navigation/bottom-tabs react-native-svg react-native-safe-area-context
 
@@ -12,7 +13,7 @@ import ServicePostsScreen from './servicepostScreen';
 
 const AnalyticsScreen = () => <View style={styles.screen}><Text>Analytics Screen</Text></View>;
 
-const ProfileScreen = () => <View style={styles.screen}><Text>Profile Screen</Text></View>;
+
 
 const Tab = createBottomTabNavigator();
 

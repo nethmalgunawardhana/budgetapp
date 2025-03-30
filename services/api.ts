@@ -212,6 +212,14 @@ export const AuthService = {
     } catch (error) {
       return { isAuthenticated: false };
     }
+  },
+  async getUserProfile() {
+    try {
+      const response = await api.get('/user/profile');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

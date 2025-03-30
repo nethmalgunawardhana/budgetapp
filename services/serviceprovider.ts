@@ -89,5 +89,6 @@ export const ServicePostService = {
     const response = await apiClient.patch(`/service-posts/${id}/status`, { status });
     return response.data;
   },
+  
 };
 
