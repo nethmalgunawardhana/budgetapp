@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
@@ -7,6 +8,7 @@ import TransactionForm from '../components/transactionform';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { transactionService } from '../../services/transactionService';
+
 
 // Define missing interfaces
 interface CategoryItem {
@@ -324,7 +326,7 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+     <StatusBar style="light" backgroundColor="#16213e" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -416,8 +418,9 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 30,
     flex: 1,
-    backgroundColor: '#191932',
+    backgroundColor: '#1a1a2e',
   },
   scrollView: {
     flex: 1,

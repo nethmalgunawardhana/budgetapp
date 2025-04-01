@@ -27,6 +27,7 @@ import { jwtDecode } from 'jwt-decode';
 
 interface CreateServicePostData {
   title: string;
+  username: string; 
   contactno: string; // Changed to string for better input handling
   description: string;
   price: number;
@@ -64,7 +65,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   const [location, setLocation] = useState<string>('');
   const [contactno, setContactno] = useState<string>(''); // Added contact number state
   const [formError, setFormError] = useState<string>('');
-  const [Username, setUsername] = useState<string>(''); 
+  const [isLoading, setIsLoading] = useState(false);
   
   // Statistics
   const [totalPosts, setTotalPosts] = useState<number>(0);
@@ -88,9 +89,9 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
         if (token) {
           // Decode the JWT token
           const decoded = jwtDecode<JWTPayload>(token);
-          
+          console.log('Decoded JWT:', decoded.name);
           // Set username and email
-          setUsername(decoded.name || 'provider');
+          setUserName(decoded.name || 'provider');
         }
       } catch (error) {
         console.error('Error fetching user info:', error);
@@ -316,10 +317,11 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
       setFormError('Please fill all required fields');
       return;
     }
-    
+    setIsLoading(true);
     try {
       const postData: CreateServicePostData = {
         title,
+        username: userName,
         description,
         price: parseFloat(price),
         contactno,
@@ -361,6 +363,8 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     } catch (error) {
       Alert.alert('Error', isEditMode ? 'Failed to update service post' : 'Failed to create service post');
       console.error(error);
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -536,12 +540,22 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
             ) : null}
             
             <TouchableOpacity 
-              style={styles.submitButton}
+              style={[styles.submitButton, isLoading && styles.disabledButton]}
               onPress={handleSubmit}
+              disabled={isLoading}
             >
-              <Text style={styles.submitButtonText}>
-                {isEditMode ? 'Update Service Post' : 'Create Service Post'}
-              </Text>
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.submitButtonText}>
+                    {isEditMode ? 'Updating...' : 'Creating...'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isEditMode ? 'Update Service Post' : 'Create Service Post'}
+                </Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -802,7 +816,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 10,
   },
   loadingText: {
     marginTop: 12,

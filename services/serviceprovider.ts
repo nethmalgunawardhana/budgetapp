@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 // Base API URL - replace with your actual API endpoint
-const API_BASE_URL = 'http://192.168.8.100:5000/api';
+const API_BASE_URL = 'http://192.168.8.101:5000/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -31,6 +31,7 @@ apiClient.interceptors.request.use(
 export interface ServicePost {
   id: string;
   title: string;
+  username: string;
   description: string;
   contactno: string;
   price: number;
@@ -43,6 +44,7 @@ export interface ServicePost {
 
 export interface CreateServicePostData {
   title: string;
+  username: string;
   description: string;
   contactno: string;
   price: number;
