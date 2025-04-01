@@ -114,7 +114,7 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['#1F3A93', '#4B77BE', '#2E4677']}
+        colors={['rgb(51, 33, 71)', ' rgb(91, 57, 131)', 'rgb(68, 41, 99)']}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -148,21 +148,21 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
             <View style={styles.serviceTypes}>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/logo.png')}
+                  source={require('../assets/images/plumber.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Plumber</Text>
               </View>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/icon.png')}
+                  source={require('../assets/images/electric.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Electrician</Text>
               </View>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/medicines.png')}
+                  source={require('../assets/images/handyman.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Handyman</Text>
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#2ECC71',
+    backgroundColor: 'rgb(127, 26, 234)',
     borderRadius: 12,
     height: 55,
     alignItems: 'center',

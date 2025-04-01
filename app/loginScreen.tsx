@@ -225,7 +225,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               disabled={loading}
             >
               <Image 
-                source={require('../assets/images/logo.png')} 
+                source={require('../assets/images/handyman.png')} 
                 style={styles.serviceIcon} 
               />
               <Text style={styles.serviceButtonText}>
@@ -367,14 +367,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   serviceProviderButton: {
-    backgroundColor: '#5DADE2',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 12,
     height: 55,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 25,
-    shadowColor: '#5DADE2',
+    shadowColor: 'rgba(255, 255, 255, 0.12)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

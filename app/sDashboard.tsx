@@ -12,7 +12,8 @@ import {
   Platform,
   FlatList,
   ActivityIndicator,
-  StyleSheet
+  StyleSheet,
+  Linking
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
@@ -23,18 +24,19 @@ import { useFocusEffect } from '@react-navigation/native';
 import { AuthService } from '../services/api'; // Import AuthService
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { jwtDecode } from 'jwt-decode';
+
 interface CreateServicePostData {
   title: string;
+  contactno: string; // Changed to string for better input handling
   description: string;
   price: number;
   category: string;
   location: string;
 }
 
-
 interface JWTPayload {
     name: string;
-  }
+}
 
 interface UpdateServicePostData extends CreateServicePostData {
   id: string;
@@ -60,6 +62,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   const [price, setPrice] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [location, setLocation] = useState<string>('');
+  const [contactno, setContactno] = useState<string>(''); // Added contact number state
   const [formError, setFormError] = useState<string>('');
   const [Username, setUsername] = useState<string>(''); 
   
@@ -71,7 +74,6 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   // Fetch user profile and service posts when screen is focused
   useFocusEffect(
     useCallback(() => {
-     
       fetchServicePosts();
     }, [])
   );
@@ -198,6 +200,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     setPrice(post.price.toString());
     setCategory(post.category);
     setLocation(post.location);
+    setContactno(post.contactno || ''); // Add contact number
     
     setIsModalVisible(true);
   };
@@ -240,6 +243,27 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     );
   };
 
+  // Handle calling the contact number
+  const handleCallContact = (phoneNumber: string): void => {
+    if (!phoneNumber) return;
+    
+    // Format the phone number for dialing
+    const phoneUrl = `tel:${phoneNumber}`;
+    
+    Linking.canOpenURL(phoneUrl)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Error', 'Phone dialer is not available on this device');
+        }
+      })
+      .catch(error => {
+        console.error('Error opening phone dialer:', error);
+        Alert.alert('Error', 'Failed to open phone dialer');
+      });
+  };
+
   // Handle toggle post status (active/inactive)
   const handleToggleStatus = async (post: ServicePost): Promise<void> => {
     const newStatus: "active" | "inactive" = post.status === 'active' ? 'inactive' : 'active';
@@ -280,6 +304,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     setPrice('');
     setCategory('');
     setLocation('');
+    setContactno(''); // Reset contact number
     setFormError('');
     setSelectedPost(null);
   };
@@ -287,7 +312,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   // Handle form submission
   const handleSubmit = async (): Promise<void> => {
     // Validate form
-    if (!title || !description || !price || !category || !location) {
+    if (!title || !description || !price || !category || !location || !contactno) {
       setFormError('Please fill all required fields');
       return;
     }
@@ -297,6 +322,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
         title,
         description,
         price: parseFloat(price),
+        contactno,
         category,
         location,
       };
@@ -351,7 +377,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
             <Text style={styles.statusText}>{item.status === 'active' ? 'Active' : 'Inactive'}</Text>
           </View>
         </View>
-        <Text style={styles.postPrice}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.postPrice}>${item.price}</Text>
       </View>
       
       <Text style={styles.postDescription} numberOfLines={2}>{item.description}</Text>
@@ -366,6 +392,17 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
           <Text style={styles.postInfoText} numberOfLines={1}>{item.category}</Text>
         </View>
       </View>
+      
+      {/* Add contact number display with phone icon */}
+      {item.contactno && (
+        <TouchableOpacity 
+          style={styles.contactContainer}
+          onPress={() => handleCallContact(item.contactno)}
+        >
+          <Ionicons name="call" size={16} color="#3498DB" />
+          <Text style={styles.contactText}>{item.contactno}</Text>
+        </TouchableOpacity>
+      )}
       
       <View style={styles.postActions}>
         <TouchableOpacity 
@@ -454,6 +491,17 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
               value={price}
               onChangeText={setPrice}
               keyboardType="decimal-pad"
+            />
+            
+            {/* Add contact number field */}
+            <Text style={styles.inputLabel}>Contact Number *</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="e.g. +1 555-123-4567"
+              value={contactno}
+              onChangeText={setContactno}
+              keyboardType="phone-pad"
+              maxLength={15}
             />
             
             <Text style={styles.inputLabel}>Category *</Text>
@@ -619,6 +667,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -883,6 +932,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7F8C8D',
     marginLeft: 4,
+  },
+  contactContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    padding: 4,
+  },
+  contactText: {
+    fontSize: 14,
+    color: '#3498DB',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   postActions: {
     flexDirection: 'row',

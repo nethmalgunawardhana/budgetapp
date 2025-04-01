@@ -264,7 +264,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['#1A5276', '#2874A6', '#2E86C1']}
+        colors={['rgb(51, 33, 71)', ' rgb(91, 57, 131)', 'rgb(68, 41, 99)']}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -277,15 +277,12 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
           
           <Animated.View 
             style={[
-              styles.contentContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }]
-              }
+              styles.contentContainer
+              
             ]}
           >
             <Image 
-              source={require('../assets/images/logo.png')} 
+              source={require('../assets/images/service.png')} 
               style={styles.logo}
               resizeMode="contain"
             />
@@ -435,7 +432,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   nextButton: {
-    backgroundColor: '#3498DB',
+    backgroundColor: 'rgb(127, 42, 238)',
     borderRadius: 12,
     height: 55,
     flexDirection: 'row',

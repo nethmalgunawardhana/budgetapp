@@ -32,6 +32,7 @@ export interface ServicePost {
   id: string;
   title: string;
   description: string;
+  contactno: string;
   price: number;
   category: string;
   location: string;
@@ -43,6 +44,7 @@ export interface ServicePost {
 export interface CreateServicePostData {
   title: string;
   description: string;
+  contactno: string;
   price: number;
   category: string;
   location: string;
