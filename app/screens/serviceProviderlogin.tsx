@@ -14,7 +14,7 @@ import {
   ScrollView
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AuthService } from '../services/api';
+import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -136,7 +136,7 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
           >
             <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
               <Image 
-                source={require('../assets/images/logo.png')} 
+                source={require('../../assets/images/logo.png')} 
                 style={styles.logo}
                 resizeMode="contain"
               />
@@ -148,21 +148,21 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
             <View style={styles.serviceTypes}>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/plumber.png')}
+                  source={require('../../assets/images/plumber.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Plumber</Text>
               </View>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/electric.png')}
+                  source={require('../../assets/images/electric.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Electrician</Text>
               </View>
               <View style={styles.serviceTypeItem}>
                 <Image 
-                  source={require('../assets/images/handyman.png')}
+                  source={require('../../assets/images/handyman.png')}
                   style={styles.serviceTypeIcon}
                 />
                 <Text style={styles.serviceTypeText}>Handyman</Text>

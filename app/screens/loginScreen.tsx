@@ -15,18 +15,18 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { AuthService } from '../services/api';
+import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();
 
-type LoginScreenProps = {
-  navigation: any;
-};
+
 
 const { width } = Dimensions.get('window');
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+const LoginScreen: React.FC= () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,7 +72,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     setLoading(true);
     try {
       await AuthService.googleSignIn(googleToken);
-      navigation.replace('Home');
+      router.replace('./HomeScreen');
     } catch (error: any) {
       setErrorMessage(
         error.response?.data?.message || 
@@ -105,7 +105,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     
     try {
       await AuthService.login({ email, password });
-      navigation.replace('Home');
+      router.replace('./HomeScreen');
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
       setErrorMessage(errorMsg);
@@ -116,15 +116,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   const navigateToSignUp = () => {
-    navigation.navigate('SignUp');
+    router.replace('./signupScreen');
   };
 
   const navigateToServiceProviderLogin = () => {
-    navigation.navigate('ServiceProviderLogin');
+    router.replace('./serviceProviderlogin');
   };
 
   const navigateToServiceProviderSignUp = () => {
-    navigation.navigate('ServiceProviderSignUp');
+    router.replace('./serviceProviderregister');
   };
 
   const initiateGoogleSignIn = async () => {
@@ -153,7 +153,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           ]}
         >
           <Image 
-            source={require('../assets/images/logo.png')} 
+            source={require('../../assets/images/logo.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
@@ -211,7 +211,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               disabled={loading}
             >
               <Image 
-                source={require('../assets/images/google-icon.png')} 
+                source={require('../../assets/images/google-icon.png')} 
                 style={styles.googleIcon} 
               />
               <Text style={styles.googleButtonText}>
@@ -225,7 +225,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               disabled={loading}
             >
               <Image 
-                source={require('../assets/images/handyman.png')} 
+                source={require('../../assets/images/handyman.png')} 
                 style={styles.serviceIcon} 
               />
               <Text style={styles.serviceButtonText}>

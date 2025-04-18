@@ -21,7 +21,6 @@ import { useFocusEffect } from '@react-navigation/native';
 
 // Extended ServicePost interface
 interface EnhancedServicePost extends ServicePost {
-  rating?: number;
   userRating?: number;
 }
 
@@ -48,7 +47,13 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
       const response = await ServicePostService.getAllServicePost();
       if (response.success) {
         // Initialize with ratings if they don't exist
-        const postsWithRatings: EnhancedServicePost[] = response.data.map(post => ({
+        interface ServicePostResponse {
+          success: boolean;
+          data: ServicePost[];
+          message?: string;
+        }
+
+        const postsWithRatings: EnhancedServicePost[] = (response as ServicePostResponse).data.map((post: ServicePost) => ({
           ...post,
           rating: post.rating, 
           userRating: 0

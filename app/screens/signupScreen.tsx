@@ -15,15 +15,14 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { AuthService } from '../services/api';
-
+import { AuthService } from '../../services/api';
+import { useRouter } from 'expo-router';
 WebBrowser.maybeCompleteAuthSession();
 
-type SignUpScreenProps = {
-  navigation: any;
-};
+;
 
-const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
+const SignUpScreen: React.FC = ( ) => {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -50,7 +49,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
     setLoading(true);
     try {
       await AuthService.googleSignIn(googleToken);
-      navigation.replace('Home');
+      router.replace('./HomeScreen');
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 
         'Failed to sign up with Google. Please try again.';
@@ -88,7 +87,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
     
     try {
       await AuthService.register({ name, email, password });
-      navigation.replace('Login');
+      router.replace('./loginScreen');
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 
         'Sign up failed. Please try again.';
@@ -109,7 +108,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
   };
 
   const navigateToLogin = () => {
-    navigation.navigate('Login');
+    router.replace('./loginScreen');
   };
 
   return (
@@ -177,7 +176,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
                 disabled={loading}
               >
                 <Image 
-                  source={require('../assets/images/google-icon.png')} 
+                  source={require('../../assets/images/google-icon.png')} 
                   style={styles.googleIcon} 
                 />
                 <Text style={styles.googleButtonText}>

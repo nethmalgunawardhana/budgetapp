@@ -14,7 +14,7 @@ import {
   Dimensions
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AuthService } from '../services/api';
+import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -282,7 +282,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
             ]}
           >
             <Image 
-              source={require('../assets/images/service.png')} 
+              source={require('../../assets/images/service.png')} 
               style={styles.logo}
               resizeMode="contain"
             />

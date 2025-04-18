@@ -18,10 +18,10 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ServicePostService, ServicePost } from '../services/serviceprovider';
+import { ServicePostService, ServicePost } from '../../services/serviceprovider';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { AuthService } from '../services/api'; // Import AuthService
+import { AuthService } from '../../services/api'; // Import AuthService
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { jwtDecode } from 'jwt-decode';
 

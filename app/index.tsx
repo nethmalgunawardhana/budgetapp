@@ -1,16 +1,5 @@
-import { Text, View } from "react-native";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import NewStack from "./navigation";
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return (
-    <SafeAreaProvider>
-      
-        <View style={{ flex: 1 }}>
-          <NewStack />
-        </View>
-    
-    </SafeAreaProvider>
-  );
+  return <Redirect href="/screens/loginScreen" />;
 }
-

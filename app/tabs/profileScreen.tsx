@@ -153,7 +153,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
           <View style={styles.actionCardsContainer}>
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => navigation.navigate('Favorites')}
+              
             >
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(255, 86, 94, 0.15)' }]}>
                 <Ionicons name="heart" size={24} color="#FF565E" />
@@ -163,7 +163,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
             
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => navigation.navigate('Settings')}
+              
             >
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(7, 153, 146, 0.15)' }]}>
                 <Ionicons name="settings-outline" size={24} color="#079992" />
@@ -173,7 +173,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
             
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => navigation.navigate('History')}
+            
             >
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(255, 159, 26, 0.15)' }]}>
                 <Ionicons name="time-outline" size={24} color="#FF9F1A" />
@@ -183,7 +183,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
             
             <TouchableOpacity 
               style={styles.actionCard}
-              onPress={() => navigation.navigate('Help')}
+             
             >
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(46, 134, 222, 0.15)' }]}>
                 <Ionicons name="help-circle-outline" size={24} color="#2E86DE" />
