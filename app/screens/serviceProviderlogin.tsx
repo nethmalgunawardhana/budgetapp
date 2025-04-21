@@ -17,14 +17,14 @@ import { StatusBar } from 'expo-status-bar';
 import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
-type ServiceProviderLoginScreenProps = {
-  navigation: any;
-};
+
 
 const { width } = Dimensions.get('window');
 
-const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({ navigation }) => {
+const ServiceProviderLoginScreen: React.FC = () => {
+  const navigation = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,7 +91,7 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
       await AuthService.serviceProviderLogin({ email, password });
       console.log('Login successful!');
       // Navigate to the service provider dashboard 
-      navigation.navigate('ServiceProviderDashboard');
+      navigation.navigate('./sDashboard');
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
@@ -103,11 +103,11 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
   };
 
   const navigateToServiceProviderSignUp = () => {
-    navigation.navigate('ServiceProviderSignUp');
+    navigation.navigate('./serviceProviderregister');
   };
 
   const navigateToUserLogin = () => {
-    navigation.navigate('Login');
+    navigation.navigate('./loginScreen');
   };
 
   return (
@@ -120,7 +120,7 @@ const ServiceProviderLoginScreen: React.FC<ServiceProviderLoginScreenProps> = ({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.back()}
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>

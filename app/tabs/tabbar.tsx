@@ -87,7 +87,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
 export default function TabNavigator() {
   return (
-    <Tab.Navigator
+    <Tab.Navigator 
+      
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,

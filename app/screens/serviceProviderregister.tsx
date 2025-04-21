@@ -18,14 +18,12 @@ import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-
-type ServiceProviderSignUpScreenProps = {
-  navigation: any;
-};
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = ({ navigation }) => {
+const ServiceProviderSignUpScreen: React.FC = () => {
+  const navigation = useRouter();
   const [loading, setLoading] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -129,7 +127,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
       Alert.alert(
         'Registration Successful', 
         'Your account has been created! Our team will review your application and get back to you within 24 hours.',
-        [{ text: 'OK', onPress: () => navigation.navigate('ServiceProviderLogin') }]
+        [{ text: 'OK', onPress: () => navigation.navigate('./serviceProviderlogin') }]
       );
     } catch (error: any) {
        console.error('Registration error:', error); 
@@ -270,7 +268,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <TouchableOpacity 
             style={styles.closeButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.back()}
           >
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
@@ -318,7 +316,7 @@ const ServiceProviderSignUpScreen: React.FC<ServiceProviderSignUpScreenProps> = 
             <View style={styles.bottomLinks}>
               <TouchableOpacity 
                 style={styles.loginLink}
-                onPress={() => navigation.navigate('ServiceProviderLogin')}
+                onPress={() => navigation.navigate('./serviceProviderlogin')}
               >
                 <Text style={styles.loginText}>
                   Already have an account? <Text style={styles.loginBold}>Log In</Text>

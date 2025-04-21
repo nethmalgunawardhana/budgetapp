@@ -72,7 +72,7 @@ const LoginScreen: React.FC= () => {
     setLoading(true);
     try {
       await AuthService.googleSignIn(googleToken);
-      router.replace('./HomeScreen');
+      router.replace('../tabs/tabbar');
     } catch (error: any) {
       setErrorMessage(
         error.response?.data?.message || 
@@ -105,7 +105,7 @@ const LoginScreen: React.FC= () => {
     
     try {
       await AuthService.login({ email, password });
-      router.replace('./HomeScreen');
+      router.replace('../tabs/tabbar');
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
       setErrorMessage(errorMsg);
