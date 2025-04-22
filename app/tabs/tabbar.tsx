@@ -6,10 +6,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HomeScreen from './HomeScreen';
 import ServicePostsScreen from './servicepostScreen';
 import ProfileScreen from './profileScreen';
+import AnalyticsScreen from './AnalyticsScreen';
 
 
 
-const AnalyticsScreen = () => <View style={styles.screen}><Text>Analytics Screen</Text></View>;
 
 const Tab = createBottomTabNavigator();
 
