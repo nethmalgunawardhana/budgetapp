@@ -22,6 +22,53 @@ interface CreateSavingsPlanRequest {
   savingsPercentage: number;
 }
 
+interface TransactionRequest {
+  amount: number;
+  category: string;
+  description?: string;
+  type: 'EXPENSE' | 'INCOME';
+  paymentMethod?: string;
+}
+
+interface DailySpendingData {
+  dailySpending: {
+    date: string;
+    totalAmount: number;
+    transactions: Transaction[];
+  }[];
+  statistics: {
+    totalTransactions: number;
+    totalSpending: number;
+    dateRange: {
+      from: string;
+      to: string;
+    };
+  };
+}
+
+interface Transaction {
+  id: string;
+  userId: string;
+  amount: number;
+  category: string;
+  description: string;
+  type: 'EXPENSE' | 'INCOME';
+  paymentMethod: string;
+  createdAt: string;
+}
+
+interface CategorySpendingData {
+  categorySpending: {
+    category: string;
+    totalAmount: number;
+    transactionCount: number;
+    transactions: Transaction[];
+  }[];
+  totalCategories: number;
+  totalTransactions: number;
+  totalSpending: number;
+}
+
 const API_BASE_URL = 'http://192.168.8.101:5000';
 
 /**
@@ -110,19 +157,56 @@ export const getSavingsPlanHistory = async (): Promise<SavingsPlanData[]> => {
 };
 
 /**
- * Record a new expense in the current savings plan
+ * Create a new transaction (expense or income)
  */
-export const recordExpense = async (amount: number, category: string, date: string): Promise<SavingsPlanData> => {
+export const createTransaction = async (transactionData: TransactionRequest): Promise<Transaction> => {
   try {
     const authHeaders = await getAuthHeaders();
-    const response = await axios.post(
-      `${API_BASE_URL}/api/savings/expense`, 
-      { amount, category, date }, 
-      authHeaders
-    );
+    const response = await axios.post(`${API_BASE_URL}/api/savings/transactions`, transactionData, authHeaders);
     return response.data.data;
   } catch (error) {
-    console.error('Error recording expense:', error);
-    throw new Error('Failed to record expense');
+    console.error('Error creating transaction:', error);
+    throw new Error('Failed to create transaction');
+  }
+};
+
+/**
+ * Get daily transactions
+ */
+export const getDailyTransactions = async (): Promise<DailySpendingData> => {
+  try {
+    const authHeaders = await getAuthHeaders();
+    const response = await axios.get(`${API_BASE_URL}/api/savings/transactions/daily`, authHeaders);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching daily transactions:', error);
+    throw new Error('Failed to fetch daily transactions');
+  }
+};
+
+/**
+ * Get transactions by category
+ */
+export const getCategoryTransactions = async (
+  startDate?: string, 
+  endDate?: string
+): Promise<CategorySpendingData> => {
+  try {
+    const authHeaders = await getAuthHeaders();
+    let url = `${API_BASE_URL}/api/savings/transactions/category`;
+    
+    // Add query parameters if provided
+    if (startDate || endDate) {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      url += `?${params.toString()}`;
+    }
+    
+    const response = await axios.get(url, authHeaders);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching category transactions:', error);
+    throw new Error('Failed to fetch category transactions');
   }
 };

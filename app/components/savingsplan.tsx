@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Alert, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
-import { createSavingsPlan, getCurrentSavingsPlan, deleteSavingsPlan, updateSavingsPlan } from '../../services/savingsPlanService';
+import { 
+  getCurrentSavingsPlan, 
+  createSavingsPlan, 
+  deleteSavingsPlan, 
+  updateSavingsPlan,
+  getDailyTransactions
+} from '../../services/savingsPlanService';
 
 interface SavingsPlanData {
   id: string;
@@ -15,34 +21,88 @@ interface SavingsPlanData {
   currentSpending: number;
   dailySpendingLimit: number;
   progress: number;
-  spendingHistory: { date: string; amount: number }[];
+  spendingHistory: { date: string; amount: number; category: string }[];
+}
+
+interface Transaction {
+  id: string;
+  userId: string;
+  amount: number;
+  category: string;
+  description: string;
+  type: string;
+  paymentMethod: string;
+  createdAt: string;
 }
 
 export default function SavingsPlanTab() {
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [creatingPlan, setCreatingPlan] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<SavingsPlanData | null>(null);
+  const [dailyTransactions, setDailyTransactions] = useState<Transaction[]>([]);
+  const [todaySpending, setTodaySpending] = useState<number>(0);
   const [fixedIncome, setFixedIncome] = useState<string>('');
   const [fixedCosts, setFixedCosts] = useState<string>('');
   const [savingsPercentage, setSavingsPercentage] = useState<number>(25);
   const [showNewPlan, setShowNewPlan] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCurrentPlan();
-  }, []);
-
-  const loadCurrentPlan = async () => {
+  const loadCurrentPlan = useCallback(async () => {
     try {
       setLoading(true);
       const plan = await getCurrentSavingsPlan();
       setCurrentPlan(plan);
       setError(null);
+      
+      // Load today's transactions
+      await loadDailyTransactions();
     } catch (err) {
       setError('Failed to load savings plan');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const loadDailyTransactions = async () => {
+    try {
+      const response = await getDailyTransactions();
+      
+      // If there's spending data for today
+      if (response?.dailySpending && response.dailySpending.length > 0) {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Find today's spending data
+        const todayData = response.dailySpending.find(day => day.date === today);
+        
+        if (todayData) {
+          setDailyTransactions(todayData.transactions);
+          setTodaySpending(todayData.totalAmount);
+        } else {
+          setDailyTransactions([]);
+          setTodaySpending(0);
+        }
+      } else {
+        setDailyTransactions([]);
+        setTodaySpending(0);
+      }
+    } catch (err) {
+      console.error('Error loading daily transactions:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadCurrentPlan();
+  }, [loadCurrentPlan]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadCurrentPlan();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -133,6 +193,43 @@ export default function SavingsPlanTab() {
     return `Rs.${amount.toLocaleString()}`;
   };
 
+  // Generate chart data from daily transactions
+  const generateChartData = () => {
+    // If we have a current plan and transactions data
+    if (currentPlan && dailyTransactions.length > 0) {
+      // Sort transactions by created date
+      const sortedTransactions = [...dailyTransactions].sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      // Get last 7 transactions or all if less than 7
+      const recentTransactions = sortedTransactions.slice(-7);
+      
+      // Format for the chart
+      return {
+        labels: recentTransactions.map(t => {
+          const date = new Date(t.createdAt);
+          return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }),
+        datasets: [
+          {
+            data: recentTransactions.map(t => 
+              (parseFloat(t.amount.toString()) / currentPlan.dailySpendingLimit) * 100
+            ),
+            color: () => 'rgba(255, 215, 0, 0.8)',
+            strokeWidth: 2
+          }
+        ]
+      };
+    }
+    
+    // Default empty chart data
+    return {
+      labels: [],
+      datasets: [{ data: [], color: () => 'rgba(255, 215, 0, 0.8)', strokeWidth: 2 }]
+    };
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -142,7 +239,13 @@ export default function SavingsPlanTab() {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#FFA500"]} />
+      }
+    >
       {showNewPlan ? (
         <View style={styles.newPlanContainer}>
           <View style={styles.newPlanHeader}>
@@ -253,21 +356,10 @@ export default function SavingsPlanTab() {
             </View>
           </View>
           
-          {currentPlan.spendingHistory.length > 0 ? (
+          {dailyTransactions.length > 0 ? (
             <View style={styles.chartContainer}>
               <LineChart
-                data={{
-                  labels: currentPlan.spendingHistory.map(item => item.date.slice(0, 5)),
-                  datasets: [
-                    {
-                      data: currentPlan.spendingHistory.map(item => 
-                        (item.amount / currentPlan.dailySpendingLimit) * 100
-                      ),
-                      color: () => 'rgba(255, 215, 0, 0.8)',
-                      strokeWidth: 2
-                    }
-                  ]
-                }}
+                data={generateChartData()}
                 width={Dimensions.get('window').width - 40}
                 height={180}
                 chartConfig={{
@@ -297,7 +389,9 @@ export default function SavingsPlanTab() {
               />
               
               <View style={styles.tooltipContainer}>
-                <Text style={styles.tooltipValue}>{`${Math.round(currentPlan.progress)}%`}</Text>
+                <Text style={styles.tooltipValue}>
+                  {`${Math.round((todaySpending / currentPlan.dailySpendingLimit) * 100)}%`}
+                </Text>
               </View>
               
               <View style={styles.verticalAxisLines}>
@@ -319,14 +413,14 @@ export default function SavingsPlanTab() {
               Today is {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} and you spent:
             </Text>
             <Text style={styles.spendingAmountText}>
-              {formatCurrency(currentPlan.currentSpending)}
+              {formatCurrency(todaySpending)}
             </Text>
             
             <Text style={styles.spendingLimitText}>
               You can spend:
             </Text>
             <Text style={styles.remainingAmountText}>
-              {formatCurrency(currentPlan.dailySpendingLimit - currentPlan.currentSpending)}
+              {formatCurrency(currentPlan.dailySpendingLimit - todaySpending)}
             </Text>
           </View>
           
