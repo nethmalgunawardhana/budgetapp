@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthService } from '../../services/api';
-import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
+import { useRouter } from 'expo-router';
 
 type UserProfile = {
   name: string;
@@ -13,14 +12,12 @@ type UserProfile = {
   profileImage?: string;
 };
 
-interface ServiceProviderDashboardScreenProps {
-  navigation: any;
-}
 
-const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigation }) => {
+
+const ProfileScreen: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
+  const navigation= useRouter();
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -50,10 +47,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
             try {
               await AuthService.logout();
               // Navigate to login screen
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
+              navigation.replace('../../screens/loginScreen');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -65,7 +59,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.back();
   };
 
   if (loading) {
@@ -79,10 +73,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#1a1a2e']}
-        style={styles.gradientBackground}
-      >
+     
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={28} color="white" />
@@ -204,7 +195,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
           {/* Spacer to ensure content isn't hidden behind tab bar */}
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      </LinearGradient>
+     
     </SafeAreaView>
   );
 };
@@ -212,7 +203,7 @@ const ProfileScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigati
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1E1B2E',
   },
   gradientBackground: {
     flex: 1,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView,Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -326,16 +326,24 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-     <StatusBar style="light" backgroundColor="#16213e" />
+     <StatusBar  backgroundColor="#1E1B2E" />
       
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userInfoContainer}>
-          <Text style={styles.headerTitle}>Hi Welcome,</Text>
-          <Text style={styles.headerTitle}>{username}</Text>
-        </View>
-        <View style={{ width: 24 }} />
+    <View style={styles.userInfoContainer}>
+    <View style={styles.welcomeRow}>
+      <Image
+        source={require('../../assets/images/avatar.png')} // Note: Changed from src to require
+        style={styles.avatar}
+      />
+      <View style={styles.welcomeTextContainer}>
+        <Text style={styles.headerTitle}>Hi Welcome,</Text>
+        <Text style={styles.headerTitle}>{username}</Text>
       </View>
+    </View>
+  </View>
+  <View style={{ width: 24 }} />
+</View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -420,7 +428,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 30,
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1E1B2E',
   },
   scrollView: {
     flex: 1,
@@ -611,6 +619,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2A2A3C', // Fallback color if image fails to load
+  },
+  welcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  welcomeTextContainer: {
+    marginLeft: 10,
   },
 });
 

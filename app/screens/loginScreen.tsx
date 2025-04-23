@@ -139,10 +139,7 @@ const LoginScreen: React.FC= () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={['#1E1423', '#32204A', '#2A1C3D']}
-        style={styles.gradient}
-      >
+      
         <Animated.View 
           style={[
             styles.contentContainer,
@@ -254,13 +251,14 @@ const LoginScreen: React.FC= () => {
             </View>
           </View>
         </Animated.View>
-      </LinearGradient>
+     
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#1E1423',
     flex: 1,
   },
   gradient: {
@@ -273,9 +271,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    marginBottom: -40,
+    width: 150,
+    height: 150,
+    
   },
   title: {
     fontSize: 28,
@@ -322,8 +321,7 @@ const styles = StyleSheet.create({
     shadowColor: '#7a4ecf',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 10
   },
   loginButtonText: {
     color: 'white',
@@ -377,8 +375,7 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(255, 255, 255, 0.12)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 10
   },
   serviceIcon: {
     width: 24,

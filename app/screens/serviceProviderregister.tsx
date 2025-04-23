@@ -261,17 +261,9 @@ const ServiceProviderSignUpScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={['rgb(51, 33, 71)', ' rgb(91, 57, 131)', 'rgb(68, 41, 99)']}
-        style={styles.gradient}
-      >
+    
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <TouchableOpacity 
-            style={styles.closeButton}
-            onPress={() => navigation.back()}
-          >
-            <Ionicons name="close" size={24} color="white" />
-          </TouchableOpacity>
+         
           
           <Animated.View 
             style={[
@@ -325,7 +317,7 @@ const ServiceProviderSignUpScreen: React.FC = () => {
             </View>
           </Animated.View>
         </ScrollView>
-      </LinearGradient>
+     
     </SafeAreaView>
   );
 };
@@ -333,6 +325,7 @@ const ServiceProviderSignUpScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1E1423',
   },
   gradient: {
     flex: 1,

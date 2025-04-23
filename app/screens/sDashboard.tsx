@@ -21,14 +21,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ServicePostService, ServicePost } from '../../services/serviceprovider';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { AuthService } from '../../services/api'; // Import AuthService
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { AuthService } from '../../services/api'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { jwtDecode } from 'jwt-decode';
+import { useRouter } from 'expo-router';
 
 interface CreateServicePostData {
   title: string;
   username: string; 
-  contactno: string; // Changed to string for better input handling
+  contactno: string; 
   description: string;
   price: number;
   category: string;
@@ -43,11 +44,7 @@ interface UpdateServicePostData extends CreateServicePostData {
   id: string;
 }
 
-interface ServiceProviderDashboardScreenProps {
-  navigation: any;
-}
-
-const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenProps> = ({ navigation }) => {
+const ServiceProviderDashboardScreen: React.FC = () => {
   // State management
   const [servicePosts, setServicePosts] = useState<ServicePost[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,8 +52,8 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [selectedPost, setSelectedPost] = useState<ServicePost | null>(null);
-  const [userName, setUserName] = useState<string>('Provider'); // Added state for user name
-  
+  const [userName, setUserName] = useState<string>('Provider'); 
+  const navigation = useRouter();
   // Form state
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -75,31 +72,31 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
   // Fetch user profile and service posts when screen is focused
   useFocusEffect(
     useCallback(() => {
-      fetchServicePosts();
+      fetchUserInfo().then(() => {
+        fetchServicePosts();
+      });
     }, [])
   );
 
   // Fetch user profile to get name
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        // Retrieve the JWT token from AsyncStorage
-        const token = await AsyncStorage.getItem('accessToken');
-        
-        if (token) {
-          // Decode the JWT token
-          const decoded = jwtDecode<JWTPayload>(token);
-          console.log('Decoded JWT:', decoded.name);
-          // Set username and email
-          setUserName(decoded.name || 'provider');
-        }
-      } catch (error) {
-        console.error('Error fetching user info:', error);
+  const fetchUserInfo = async () => {
+    try {
+      // Retrieve the JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('accessToken');
+      
+      if (token) {
+        // Decode the JWT token
+        const decoded = jwtDecode<JWTPayload>(token);
+        console.log('Decoded JWT:', decoded.name);
+        // Set username and email
+        setUserName(decoded.name || 'provider');
+        return decoded.name;
       }
-    };
-
-    fetchUserInfo();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+    return null;
+  };
 
   // Handle logout
   const handleLogout = async (): Promise<void> => {
@@ -115,10 +112,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
             try {
               await AuthService.logout();
               // Navigate to login screen
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
+              navigation.replace('./loginScreen');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -129,7 +123,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     );
   };
 
-  // Fetch all service posts
+  // Fetch all service posts for the current user
   const fetchServicePosts = async (): Promise<void> => {
     setLoading(true);
     try {
@@ -139,29 +133,23 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
       console.log('Service Posts Response:', JSON.stringify(response));
       
       // More robust handling of the response
+      let posts: ServicePost[] = [];
+      
       if (response && response.data) {
-        setServicePosts(response.data);
-        
-        // Calculate statistics
-        setTotalPosts(response.data.length);
-        setActivePosts(response.data.filter((post: ServicePost) => post.status === 'active').length);
-        setInactivePosts(response.data.filter((post: ServicePost) => post.status === 'inactive').length);
+        posts = response.data;
       } else if (response && Array.isArray(response)) {
-        // In case the response itself is the array of posts
-        setServicePosts(response);
-        
-        // Calculate statistics
-        setTotalPosts(response.length);
-        setActivePosts(response.filter((post: ServicePost) => post.status === 'active').length);
-        setInactivePosts(response.filter((post: ServicePost) => post.status === 'inactive').length);
-      } else {
-        // Fallback to empty array if response structure is unexpected
-        console.error('Unexpected response structure:', response);
-        setServicePosts([]);
-        setTotalPosts(0);
-        setActivePosts(0);
-        setInactivePosts(0);
+        posts = response;
       }
+      
+      // Filter posts by current username
+      const filteredPosts = posts.filter(post => post.username === userName);
+      setServicePosts(filteredPosts);
+      
+      // Calculate statistics based on filtered posts
+      setTotalPosts(filteredPosts.length);
+      setActivePosts(filteredPosts.filter((post: ServicePost) => post.status === 'active').length);
+      setInactivePosts(filteredPosts.filter((post: ServicePost) => post.status === 'inactive').length);
+      
     } catch (error) {
       Alert.alert('Error', 'Failed to load your service posts');
       console.error('Error fetching service posts:', error);
@@ -363,7 +351,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     } catch (error) {
       Alert.alert('Error', isEditMode ? 'Failed to update service post' : 'Failed to create service post');
       console.error(error);
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -567,7 +555,7 @@ const ServiceProviderDashboardScreen: React.FC<ServiceProviderDashboardScreenPro
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={['#1A5276', '#2874A6', '#2E86C1']}
+        colors={['#1E1423', '#1E1423', '#1E1423']}
         style={styles.headerGradient}
       >
         <View style={styles.topBar}>
@@ -688,7 +676,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F7FA',
   },
   headerGradient: {
-    paddingTop: 20,
+    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 20,

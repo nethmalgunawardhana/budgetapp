@@ -113,17 +113,9 @@ const ServiceProviderLoginScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={['rgb(51, 33, 71)', ' rgb(91, 57, 131)', 'rgb(68, 41, 99)']}
-        style={styles.gradient}
-      >
+    
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
+         
           
           <Animated.View 
             style={[
@@ -227,7 +219,7 @@ const ServiceProviderLoginScreen: React.FC = () => {
             </View>
           </Animated.View>
         </ScrollView>
-      </LinearGradient>
+  
     </SafeAreaView>
   );
 };
@@ -235,6 +227,7 @@ const ServiceProviderLoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1E1423',
   },
   gradient: {
     flex: 1,
@@ -258,9 +251,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 180,
+    height: 180,
+    marginBottom: -20,
   },
   title: {
     fontSize: 28,

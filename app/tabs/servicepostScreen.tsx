@@ -11,13 +11,16 @@ import {
   RefreshControl,
   Linking,
   Alert,
-  Modal
+  Modal,
+  Animated,
+  Platform
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { ServicePostService, ServicePost } from '../../services/serviceprovider';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Extended ServicePost interface
 interface EnhancedServicePost extends ServicePost {
@@ -27,6 +30,8 @@ interface EnhancedServicePost extends ServicePost {
 interface ServiceProviderpostScreenProps {
   navigation: any;
 }
+
+const USER_RATINGS_KEY = 'user_service_ratings';
 
 const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigation}) => {
   const [servicePosts, setServicePosts] = useState<EnhancedServicePost[]>([]);
@@ -40,6 +45,31 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [currentRating, setCurrentRating] = useState(0);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [userRatings, setUserRatings] = useState<Record<string, number>>({});
+  const [scaleAnimation] = useState(new Animated.Value(1));
+
+  // Load user ratings from AsyncStorage
+  const loadUserRatings = async () => {
+    try {
+      const savedRatings = await AsyncStorage.getItem(USER_RATINGS_KEY);
+      if (savedRatings) {
+        setUserRatings(JSON.parse(savedRatings));
+      }
+    } catch (error) {
+      console.error('Error loading user ratings:', error);
+    }
+  };
+
+  // Save user ratings to AsyncStorage
+  const saveUserRating = async (postId: string, rating: number) => {
+    try {
+      const updatedRatings = { ...userRatings, [postId]: rating };
+      setUserRatings(updatedRatings);
+      await AsyncStorage.setItem(USER_RATINGS_KEY, JSON.stringify(updatedRatings));
+    } catch (error) {
+      console.error('Error saving user rating:', error);
+    }
+  };
 
   const fetchServicePosts = async () => {
     try {
@@ -53,10 +83,11 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
           message?: string;
         }
 
+        // Get saved ratings and apply them to posts
         const postsWithRatings: EnhancedServicePost[] = (response as ServicePostResponse).data.map((post: ServicePost) => ({
           ...post,
           rating: post.rating, 
-          userRating: 0
+          userRating: userRatings[post.id] || 0
         }));
         setServicePosts(postsWithRatings);
         setFilteredPosts(postsWithRatings);
@@ -74,22 +105,35 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchServicePosts();
+      loadUserRatings().then(() => fetchServicePosts());
     }, [])
   );
 
+  // Update posts when userRatings change
+  useEffect(() => {
+    if (servicePosts.length > 0) {
+      const updatedPosts = servicePosts.map(post => ({
+        ...post,
+        userRating: userRatings[post.id] || 0
+      }));
+      setServicePosts(updatedPosts);
+      filterPosts(updatedPosts);
+    }
+  }, [userRatings]);
+
   const onRefresh = async () => {
     setRefreshing(true);
+    await loadUserRatings();
     await fetchServicePosts();
     setRefreshing(false);
   };
 
   useEffect(() => {
-    filterPosts();
-  }, [searchText, selectedCategory, servicePosts]);
+    filterPosts(servicePosts);
+  }, [searchText, selectedCategory]);
 
-  const filterPosts = () => {
-    let filtered = [...servicePosts];
+  const filterPosts = (posts = servicePosts) => {
+    let filtered = [...posts];
     
     // Apply search filter
     if (searchText) {
@@ -136,6 +180,21 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
       });
   };
 
+  const animateCardPress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnimation, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const openRatingModal = (postId: string) => {
     const post = servicePosts.find(p => p.id === postId);
     if (post) {
@@ -161,10 +220,12 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
     try {
       setRatingSubmitting(true);
       
+      // Save rating to local storage
+      await saveUserRating(selectedPostId, currentRating);
+      
       // In a real app, you would call an API here
       // const response = await ServicePostService.rateServicePost(selectedPostId, currentRating);
       
-      // For now, we'll update the local state
       setTimeout(() => {
         const updatedPosts = servicePosts.map(post => {
           if (post.id === selectedPostId) {
@@ -233,74 +294,78 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
 
   const renderServicePost = ({ item }: { item: EnhancedServicePost }) => {
     return (
-      <TouchableOpacity 
-        style={styles.card}
-        activeOpacity={0.9}
+      <Animated.View 
+        style={[
+          styles.card,
+          { transform: [{ scale: scaleAnimation }] }
+        ]}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{item.category}</Text>
-          </View>
-          <Text style={styles.price}>Rs:{item.price}</Text>
-        </View>
-        
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description} numberOfLines={2}>
-          {item.description}
-        </Text>
-        
-        <View style={styles.contactContainer}>
-          <View style={styles.profileSection}>
-            <View style={styles.profileIcon}>
-              <Ionicons name="person" size={20} color="#fff" />
+        <TouchableOpacity 
+          style={styles.cardContent}
+          activeOpacity={0.9}
+          onPress={animateCardPress}
+        >
+          <View style={styles.cardDecoration} />
+          
+          <View style={styles.cardHeader}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category}</Text>
             </View>
-            <Text style={styles.contactName}>{item.username}</Text>
+            <Text style={styles.price}>Rs:{item.price}.00/hr</Text>
           </View>
           
-          <TouchableOpacity 
-            style={styles.phoneButton}
-            onPress={() => handleCallContact(item.contactno|| '')}
-          >
-            <Ionicons name="call" size={18} color="#fff" />
-            <Text style={styles.phoneNumber}>{item.contactno}</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.cardFooter}>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={16} color="#aaa" />
-            <Text style={styles.location}>{item.location}</Text>
-          </View>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description} numberOfLines={2}>
+            {item.description}
+          </Text>
           
-          <View style={styles.ratingSection}>
-            <View style={styles.statusContainer}>
-              <Text style={styles.ratingText}>Rating: {item.rating}%</Text>
-              <View style={[
-                styles.ratingBar, 
-                { width: item.rating !== undefined ? `${item.rating}%` : '0%' }
-              ]} />
+          <View style={styles.contactContainer}>
+            <View style={styles.profileSection}>
+              <View style={styles.profileIcon}>
+                <Ionicons name="person" size={20} color="#fff" />
+              </View>
+              <Text style={styles.contactName}>{item.username}</Text>
             </View>
             
-            <View style={styles.userRatingContainer}>
-              <View style={styles.starRatingRow}>
-                {renderRatingStars(item.userRating || 0)}
-                {item.userRating ? (
-                  <Text style={styles.ratedText}>Your rating</Text>
-                ) : null}
-              </View>
+            <TouchableOpacity 
+              style={styles.phoneButton}
+              onPress={() => handleCallContact(item.contactno|| '')}
+            >
+              <Ionicons name="call" size={18} color="#fff" />
+              <Text style={styles.phoneNumber}>{item.contactno}</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.cardFooter}>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location-outline" size={16} color="#aaa" />
+              <Text style={styles.location}>{item.location}</Text>
+            </View>
+            
+            <View style={styles.ratingSection}>
               
-              <TouchableOpacity 
-                style={styles.rateButton}
-                onPress={() => openRatingModal(item.id)}
-              >
-                <Text style={styles.rateButtonText}>
-                  {item.userRating ? 'Update Rating' : 'Rate Service'}
-                </Text>
-              </TouchableOpacity>
+              
+              <View style={styles.userRatingContainer}>
+                <View style={styles.starRatingRow}>
+                  {renderRatingStars(item.userRating || 0)}
+                  {item.userRating ? (
+                    <Text style={styles.ratedText}>Your rating</Text>
+                  ) : null}
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.rateButton}
+                  onPress={() => openRatingModal(item.id)}
+                >
+                  <Text style={styles.rateButtonText}>
+                    {item.userRating ? 'Update Rating' : 'Rate Service'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
@@ -472,13 +537,13 @@ const ServicePostsScreen: React.FC<ServiceProviderpostScreenProps> = ({navigatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1E1B2E',
   },
   header: {
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
-    backgroundColor: '#16213e',
+    backgroundColor: '#1E1B2E',
   },
   headerRow: {
     flexDirection: 'row',
@@ -494,7 +559,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   filterContainer: {
-    backgroundColor: '#16213e',
+    backgroundColor: '#1E1B2E',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -592,33 +657,50 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   card: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
     marginBottom: 16,
-    padding: 16,
-    elevation: 3,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  cardContent: {
+    backgroundColor: '#0f172a',
+    padding: 16,
     borderWidth: 1,
     borderColor: '#252a41',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  cardDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
+    backgroundColor: '#8B5CF6',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 16,
   },
   categoryBadge: {
     backgroundColor: '#8B5CF6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    elevation: 2,
   },
   categoryText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     textTransform: 'capitalize',
   },
@@ -626,99 +708,120 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#8B5CF6',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   description: {
-    fontSize: 14,
-    color: '#aaa',
-    marginBottom: 12,
-    lineHeight: 20,
+    fontSize: 15,
+    color: '#bbb',
+    marginBottom: 16,
+    lineHeight: 22,
   },
   contactContainer: {
-    backgroundColor: '#252a41',
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 8,
+    backgroundColor: 'rgba(37, 42, 65, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#303652',
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   profileIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#8B5CF6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 12,
+    elevation: 2,
   },
   contactName: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   phoneButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#8B5CF6',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 4,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    elevation: 2,
   },
   phoneNumber: {
     color: '#fff',
-    marginLeft: 8,
-    fontSize: 15,
+    marginLeft: 10,
+    fontSize: 16,
     fontWeight: '500',
   },
   cardFooter: {
-    marginTop: 12,
+    marginTop: 16,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    backgroundColor: 'rgba(37, 42, 65, 0.4)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   location: {
     fontSize: 14,
-    color: '#aaa',
-    marginLeft: 4,
+    color: '#ccc',
+    marginLeft: 8,
   },
   statusContainer: {
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 12,
   },
   ratingText: {
     fontSize: 14,
-    color: '#aaa',
-    marginBottom: 4,
+    color: '#bbb',
+    marginBottom: 8,
+  },
+  ratingBarBackground: {
+    height: 6,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
   },
   ratingBar: {
-    height: 4,
+    height: '100%',
     backgroundColor: '#8B5CF6',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   ratingSection: {
-    marginTop: 8,
+    marginTop: 10,
   },
   userRatingContainer: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#252a41',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   starRatingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   ratedText: {
     marginLeft: 8,
@@ -726,16 +829,15 @@ const styles = StyleSheet.create({
     color: '#aaa',
   },
   rateButton: {
-    backgroundColor: '#3a3f5c',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-    marginTop: 4,
+    backgroundColor: '#FFA500', // Orange color for rate button
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    elevation: 2,
   },
   rateButtonText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -784,25 +886,26 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#16213e',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 24,
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#252a41',
+    elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
   },
   ratingStarsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -813,9 +916,10 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
   },
   cancelButton: {
     backgroundColor: '#3a3f5c',
@@ -827,7 +931,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#FFA500', // Orange color for submit button
     marginLeft: 8,
   },
   submitButtonText: {
@@ -837,7 +941,7 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
-  },
+  }
 });
 
 export default ServicePostsScreen;

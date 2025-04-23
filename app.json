@@ -15,7 +15,7 @@
       "package": "com.nethmal22.budgetapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       }
     },
     "web": {
@@ -31,7 +31,7 @@
           "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#000000"
         }
       ]
     ],
@@ -41,11 +41,9 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "c03c7c3b-6ee6-4f71-bf99-bfe1c5ceeb8e"
       }
-    },
-    "owner": "nethmal22"
+     
+    }
+   
   }
 }

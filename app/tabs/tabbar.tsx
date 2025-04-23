@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabBarContainer: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1E1B2E',
     borderTopWidth: 0,
     paddingTop: 0,
     

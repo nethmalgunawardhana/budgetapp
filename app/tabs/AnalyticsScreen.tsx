@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, ScrollView, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,24 +47,37 @@ export default function TransactionGraphScreen() {
     loadTransactionData();
   }, [period]);
 
-  // Scroll to the start of the horizontal scroll view when data loads or period changes
+  // Reset scroll position and clear tooltip when period or view mode changes
   useEffect(() => {
-    if (!loading && stats && horizontalScrollViewRef.current) {
-      setTimeout(() => {
-        horizontalScrollViewRef.current?.scrollTo({ x: 0, animated: true });
-      }, 100);
+    if (horizontalScrollViewRef.current) {
+      horizontalScrollViewRef.current.scrollTo({ x: 0, animated: false });
     }
-  }, [loading, stats, period]);
+    
+    setTooltip({
+      visible: false,
+      value: 0,
+      x: 0,
+      y: 0,
+      date: ''
+    });
+  }, [period, viewMode]);
 
   const loadTransactionData = async () => {
     try {
       setLoading(true);
-      const data = await fetchTransactionStats(period);
-      setStats(data);
       setError(null);
+      
+      const data = await fetchTransactionStats(period);
+      
+      // Validate the data
+      if (!data || !data.dates || data.dates.length === 0) {
+        throw new Error('Empty dataset received from API');
+      }
+      
+      setStats(data);
     } catch (err) {
-      setError('Failed to load transaction data');
-      console.error(err);
+      console.error("Error loading transaction data:", err);
+      setError('Failed to load transaction data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -98,15 +111,111 @@ export default function TransactionGraphScreen() {
   const getChartWidth = () => {
     if (!stats) return Dimensions.get('window').width - 16;
     
-    const baseWidth = Dimensions.get('window').width - 16;
-    const minWidth = baseWidth; // Minimum width is screen width
+    const screenWidth = Dimensions.get('window').width - 16;
     
-    // Calculate width based on number of data points
-    // Give each data point at least 60px of width for better readability
-    const dataPointWidth = 60;
-    const calculatedWidth = stats.dates.length * dataPointWidth;
+    // Calculate width based on number of data points and period type
+    let dataPointWidth;
+    switch (period) {
+      case 'daily':
+        dataPointWidth = 80;
+        break;
+      case 'monthly':
+        dataPointWidth = 100;
+        break;
+      case 'yearly':
+        dataPointWidth = 120;
+        break;
+      default:
+        dataPointWidth = 80;
+    }
     
-    return Math.max(minWidth, calculatedWidth);
+    // Ensure the chart width is at least the screen width
+    return Math.max(stats.dates.length * dataPointWidth, screenWidth);
+  };
+
+  // Get y-axis range based on data
+  const getYAxisRange = () => {
+    if (!stats) return { min: 0, max: 100000 };
+    
+    const values = stats.dates.map(date => 
+      viewMode === 'income' 
+        ? (stats.incomeByDay[date] || 0) 
+        : (stats.expenseByDay[date] || 0)
+    );
+    
+    const max = Math.max(...values);
+    
+    // Adjust max value to round up to a nice number based on the data range
+    let adjustedMax;
+    if (max < 10000) {
+      adjustedMax = Math.ceil(max / 1000) * 1000;
+    } else if (max < 100000) {
+      adjustedMax = Math.ceil(max / 10000) * 10000;
+    } else if (max < 1000000) {
+      adjustedMax = Math.ceil(max / 100000) * 100000;
+    } else {
+      adjustedMax = Math.ceil(max / 1000000) * 1000000;
+    }
+    
+    return { min: 0, max: adjustedMax > 0 ? adjustedMax : 10000 };
+  };
+
+  // Format y-axis label based on value size
+  const formatYLabel = (value: string) => {
+    const num = parseFloat(value);
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 100000) {
+      return `${(num / 100000).toFixed(1)}L`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(0)}K`;
+    }
+    return num.toString();
+  };
+
+  // Get chart config based on period
+  const getChartConfig = () => {
+    let labelRotation = 0;
+    
+    switch (period) {
+      case 'daily':
+        labelRotation = 30;
+        break;
+      case 'monthly':
+        labelRotation = 0;
+        break;
+      case 'yearly':
+        labelRotation = 0;
+        break;
+      default:
+        labelRotation = 30;
+    }
+    
+    return {
+      backgroundColor: '#1E1B2E',
+      backgroundGradientFrom: '#1E1B2E',
+      backgroundGradientTo: '#1E1B2E',
+      decimalPlaces: 0,
+      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      style: {
+        borderRadius: 16
+      },
+      propsForDots: {
+        r: '6',
+        strokeWidth: '2',
+        stroke: viewMode === 'income' ? '#FFD700' : '#FFA500'
+      },
+      propsForLabels: {
+        fontSize: 10,
+        rotation: 0,
+        textAnchor: 'middle'
+      },
+      formatYLabel: formatYLabel,
+      paddingTop: 20,
+      paddingRight: 64,
+      yAxisInterval: 4
+    };
   };
 
   // Render statistics content
@@ -187,9 +296,11 @@ export default function TransactionGraphScreen() {
               contentContainerStyle={styles.horizontalScrollContent}
               scrollEventThrottle={16}
               nestedScrollEnabled={true}
+              persistentScrollbar={true}
             >
               <View style={styles.chartContainer}>
                 <LineChart
+                  key={`${period}-${viewMode}`} // Force re-render when period or view mode changes
                   data={{
                     labels: stats.dates,
                     datasets: [
@@ -200,40 +311,15 @@ export default function TransactionGraphScreen() {
                             : (stats.expenseByDay[date] || 0)
                         ),
                         color: () => viewMode === 'income' ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255, 165, 0, 0.8)',
-                        strokeWidth: 2
+                        strokeWidth: 3
                       }
                     ]
                   }}
                   width={getChartWidth()}
-                  height={240} // Increased height to accommodate labels better
-                  chartConfig={{
-                    backgroundColor: '#1E1B2E',
-                    backgroundGradientFrom: '#1E1B2E',
-                    backgroundGradientTo: '#1E1B2E',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    style: {
-                      borderRadius: 16
-                    },
-                    propsForDots: {
-                      r: '5', // Slightly larger dots
-                      strokeWidth: '2',
-                      stroke: viewMode === 'income' ? '#FFD700' : '#FFA500'
-                    },
-                    propsForLabels: {
-                      fontSize: 10,
-                      rotation: period !== 'daily' ? -45 : 0,
-                      originY: 20, // Increased space for x-axis labels
-                      textAnchor: 'middle'
-                    },
-                    // Improved Y-axis formatting
-                    formatYLabel: (value) => `${Math.round(parseFloat(value))}`,
-                    // Add padding to ensure labels are visible
-                    paddingTop: 20,
-                    paddingRight: 64,
-                    yAxisInterval: 4
-                  }}
+                  height={240}
+                  yAxisMin={getYAxisRange().min}
+                  yAxisMax={getYAxisRange().max}
+                  chartConfig={getChartConfig()}
                   bezier
                   withInnerLines={false}
                   withOuterLines={true}
@@ -247,9 +333,10 @@ export default function TransactionGraphScreen() {
                   yAxisLabel="Rs."
                   yAxisSuffix=""
                   verticalLabelRotation={0}
-                  xLabelsOffset={10} // Add offset to x-axis labels to prevent them from being cut off
-                  horizontalLabelRotation={30} // Rotate x-axis labels for better visibility
+                  xLabelsOffset={period === 'daily' ? 10 : 0}
+                  horizontalLabelRotation={period === 'daily' ? 30 : 0}
                   formatTopBarValue={(value) => `Rs.${value}`}
+                  segments={5}
                 />
                 
                 {tooltip.visible && (
@@ -265,7 +352,9 @@ export default function TransactionGraphScreen() {
                 )}
               </View>
             </ScrollView>
-            <Text style={styles.scrollIndicator}>← Scroll to view more →</Text>
+            {stats.dates.length > 3 && (
+              <Text style={styles.scrollIndicator}>← Scroll to view more →</Text>
+            )}
           </View>
         )}
         
@@ -289,7 +378,14 @@ export default function TransactionGraphScreen() {
           ))}
         </View>
         
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={loadTransactionData} style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </>
     );
   };
@@ -439,7 +535,7 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     paddingHorizontal: 20,
-    marginBottom: 24, // Increased margin
+    marginBottom: 24,
   },
   toggle: {
     flexDirection: 'row',
@@ -473,20 +569,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chartOuterContainer: {
-    marginVertical: 16, // Increased margin
-    paddingTop: 8, // Added padding
+    marginVertical: 16,
+    paddingTop: 8,
   },
   horizontalScrollContent: {
-    paddingHorizontal: 16, // Increased padding
+    paddingHorizontal: 16,
   },
   chartContainer: {
     alignItems: 'center',
     position: 'relative',
-    paddingBottom: 20, // Added padding to ensure labels aren't cut off
   },
   chart: {
     borderRadius: 16,
-    marginBottom: 10, // Added margin
+    marginBottom: 10,
   },
   scrollIndicator: {
     textAlign: 'center',
@@ -506,7 +601,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    zIndex: 10, // Ensure tooltip appears above other elements
+    zIndex: 10,
   },
   tooltipDate: {
     color: '#FFF',
@@ -549,9 +644,26 @@ const styles = StyleSheet.create({
   expenseText: {
     color: '#FFA500',
   },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    margin: 20,
+    alignItems: 'center',
+  },
   errorText: {
     color: '#FF4444',
     textAlign: 'center',
-    padding: 20,
+    marginBottom: 10,
   },
+  retryButton: {
+    backgroundColor: '#FF4444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+  }
 });
