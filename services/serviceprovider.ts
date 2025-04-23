@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base API URL - replace with your actual API endpoint
-const API_BASE_URL = 'http://192.168.8.101:5000/api';
+const API_BASE_URL = 'https://budgetapp-backend.vercel.app/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({

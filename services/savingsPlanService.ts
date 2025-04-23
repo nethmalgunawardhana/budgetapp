@@ -69,7 +69,7 @@ interface CategorySpendingData {
   totalSpending: number;
 }
 
-const API_BASE_URL = 'http://192.168.8.101:5000';
+const API_BASE_URL = 'https://budgetapp-backend.vercel.app';
 
 /**
  * Get authorization headers with the access token

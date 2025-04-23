@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.8.101:5000/api/transactions';
+const API_URL = 'https://budgetapp-backend.vercel.app/api/transactions';
 
 export const transactionService = {
   // Add a new transaction

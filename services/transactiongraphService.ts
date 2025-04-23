@@ -10,7 +10,7 @@ interface TransactionData {
   expenseByDay: Record<string, number>;
   dates: string[];
 }
-const API_URL = 'http://192.168.8.101:5000';
+const API_URL = 'https://budgetapp-backend.vercel.app';
 // Prepare auth headers
 const getAuthHeaders = async () => {
   const token = await AsyncStorage.getItem('accessToken');
