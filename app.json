@@ -41,9 +41,11 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "c03c7c3b-6ee6-4f71-bf99-bfe1c5ceeb8e"
       }
-     
-    }
-   
+    },
+    "owner": "nethmal22"
   }
 }
