@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView,Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
@@ -7,6 +8,7 @@ import TransactionForm from '../components/transactionform';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { transactionService } from '../../services/transactionService';
+
 
 // Define missing interfaces
 interface CategoryItem {
@@ -134,9 +136,11 @@ const TransactionCard = ({ item }: { item: Transaction }) => {
         </View>
         <View style={styles.transactionInfo}>
           <Text style={styles.transactionName}>{item.category}</Text>
+          
           <Text style={styles.transactionDate}>
             {formatDate(item.createdAt || new Date())}
           </Text>
+          <Text style = {styles.transactionDate}>{item.description}</Text>
         </View>
       </View>
       <Text style={[
@@ -322,17 +326,24 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+     <StatusBar  backgroundColor="#1E1B2E" />
       
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userInfoContainer}>
-          <Text style={styles.headerTitle}>Hi Welcome,</Text>
-          <Text style={styles.headerTitle}>{username}</Text>
-          <Text style={styles.userEmail}>{email}</Text>
-        </View>
-        <View style={{ width: 24 }} />
+    <View style={styles.userInfoContainer}>
+    <View style={styles.welcomeRow}>
+      <Image
+        source={require('../../assets/images/avatar.png')} // Note: Changed from src to require
+        style={styles.avatar}
+      />
+      <View style={styles.welcomeTextContainer}>
+        <Text style={styles.headerTitle}>Hi Welcome,</Text>
+        <Text style={styles.headerTitle}>{username}</Text>
       </View>
+    </View>
+  </View>
+  <View style={{ width: 24 }} />
+</View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -415,8 +426,9 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 30,
     flex: 1,
-    backgroundColor: '#191932',
+    backgroundColor: '#1E1B2E',
   },
   scrollView: {
     flex: 1,
@@ -607,6 +619,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2A2A3C', // Fallback color if image fails to load
+  },
+  welcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  welcomeTextContainer: {
+    marginLeft: 10,
   },
 });
 
