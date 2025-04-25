@@ -47,14 +47,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | undefined>(initialCategory);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   
-  // Get current date and time
-  const now = new Date();
-  const formattedTime = now.toLocaleTimeString('en-US', {
+  // Custom date picker state
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDateModal, setShowDateModal] = useState(false);
+  
+  // For date picker modal
+  const [tempDate, setTempDate] = useState(new Date());
+  const [tempTime, setTempTime] = useState('12:00');
+  const [tempAmPm, setTempAmPm] = useState('PM');
+  
+  const formattedTime = selectedDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
   });
-  const formattedDate = now.toLocaleDateString('en-US', {
+  
+  const formattedDate = selectedDate.toLocaleDateString('en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric'
@@ -70,8 +78,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setDescription('');
       setPaymentMethod('Physical Cash');
       setSelectedCategory(initialCategory);
+      setSelectedDate(new Date());
     }
   }, [isVisible, initialCategory]);
+  
+  // Initialize temp date and time when opening the date modal
+  useEffect(() => {
+    if (showDateModal) {
+      setTempDate(selectedDate);
+      const hours = selectedDate.getHours();
+      const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      setTempTime(`${formattedHours}:${minutes}`);
+      setTempAmPm(ampm);
+    }
+  }, [showDateModal]);
 
   const handleSave = async () => {
     if (!selectedCategory) {
@@ -93,6 +115,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         amount: parseFloat(amount),
         description,
         paymentMethod,
+        date: selectedDate.toISOString(),
       };
       
       await transactionService.addTransaction(transactionData);
@@ -120,6 +143,42 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setSelectedCategory(category);
     setCategoryModalVisible(false);
   };
+  
+  const applyDateTimeSelection = () => {
+    const [hourStr, minuteStr] = tempTime.split(':');
+    let hours = parseInt(hourStr, 10);
+    const minutes = parseInt(minuteStr, 10);
+    
+    // Convert 12h to 24h format
+    if (tempAmPm === 'PM' && hours < 12) {
+      hours += 12;
+    } else if (tempAmPm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    const newDate = new Date(tempDate);
+    newDate.setHours(hours, minutes);
+    
+    setSelectedDate(newDate);
+    setShowDateModal(false);
+  };
+  
+  // Generate date options for picker
+  const dateOptions = [];
+  const today = new Date();
+  for (let i = 30; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(today.getDate() - i);
+    
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+    
+    dateOptions.push({
+      date: new Date(date),
+      label: `${month} ${day}, ${year}`
+    });
+  }
 
   return (
     <Modal
@@ -166,12 +225,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Transaction Date/Time */}
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>TRANSACTION</Text>
-              <Text style={styles.fieldValue}>{formattedDateTime}</Text>
+            {/* Transaction Date/Time Selector */}
+            <TouchableOpacity 
+              style={styles.formField}
+              onPress={() => setShowDateModal(true)}
+            >
+              <Text style={styles.fieldLabel}>TRANSACTION DATE</Text>
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.fieldValue}>{formattedDateTime}</Text>
+                <TouchableOpacity style={styles.dropdownIcon}>
+                  <Ionicons name="calendar-outline" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
               <View style={styles.fieldUnderline} />
-            </View>
+            </TouchableOpacity>
 
             {/* Category Field with Dropdown */}
             <TouchableOpacity 
@@ -281,6 +348,111 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Custom Date Time Picker Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showDateModal}
+        onRequestClose={() => setShowDateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.dateTimeModalContent}>
+            <Text style={styles.modalTitle}>Select Date and Time</Text>
+            
+            {/* Date Selection */}
+            <View style={styles.datePickerContainer}>
+              <Text style={styles.datePickerLabel}>Date:</Text>
+              <ScrollView 
+                style={styles.dateScroller}
+                showsVerticalScrollIndicator={true}
+              >
+                {dateOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.dateOption,
+                      tempDate.toDateString() === option.date.toDateString() && styles.selectedDateOption
+                    ]}
+                    onPress={() => setTempDate(option.date)}
+                  >
+                    <Text 
+                      style={[
+                        styles.dateOptionText,
+                        tempDate.toDateString() === option.date.toDateString() && styles.selectedDateOptionText
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            
+            {/* Time Selection */}
+            <View style={styles.timePickerContainer}>
+              <Text style={styles.timePickerLabel}>Time:</Text>
+              <View style={styles.timeInputContainer}>
+                <TextInput
+                  style={styles.timeInput}
+                  value={tempTime}
+                  onChangeText={(text) => {
+                    // Basic validation for time format (e.g., 12:30)
+                    if (/^([1-9]|1[0-2]):([0-5][0-9])$/.test(text) || /^([1-9]|1[0-2]):([0-5])?$/.test(text) || /^([1-9]|1[0-2])?$/.test(text)) {
+                      setTempTime(text);
+                    }
+                  }}
+                  placeholder="12:00"
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={5}
+                />
+                <View style={styles.amPmSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.amPmOption,
+                      tempAmPm === 'AM' && styles.selectedAmPm
+                    ]}
+                    onPress={() => setTempAmPm('AM')}
+                  >
+                    <Text style={[
+                      styles.amPmText,
+                      tempAmPm === 'AM' && styles.selectedAmPmText
+                    ]}>AM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.amPmOption,
+                      tempAmPm === 'PM' && styles.selectedAmPm
+                    ]}
+                    onPress={() => setTempAmPm('PM')}
+                  >
+                    <Text style={[
+                      styles.amPmText,
+                      tempAmPm === 'PM' && styles.selectedAmPmText
+                    ]}>PM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            
+            {/* Action Buttons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowDateModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.applyButton}
+                onPress={applyDateTimeSelection}
+              >
+                <Text style={styles.applyButtonText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Category Selector Modal */}
       <CategorySelector 
@@ -423,6 +595,127 @@ const styles = StyleSheet.create({
   paymentMethodText: {
     color: 'white',
     fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateTimeModalContent: {
+    width: '90%',
+    backgroundColor: '#242444',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  datePickerContainer: {
+    marginBottom: 20,
+  },
+  datePickerLabel: {
+    color: '#9E9EA7',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  dateScroller: {
+    maxHeight: 200,
+    backgroundColor: '#1E1E38',
+    borderRadius: 8,
+  },
+  dateOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  selectedDateOption: {
+    backgroundColor: 'rgba(255, 87, 51, 0.2)',
+  },
+  dateOptionText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  selectedDateOptionText: {
+    color: '#FF5733',
+    fontWeight: 'bold',
+  },
+  timePickerContainer: {
+    marginBottom: 20,
+  },
+  timePickerLabel: {
+    color: '#9E9EA7',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  timeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeInput: {
+    flex: 1,
+    backgroundColor: '#1E1E38',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    color: 'white',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  amPmSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#1E1E38',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  amPmOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  selectedAmPm: {
+    backgroundColor: '#FF5733',
+  },
+  amPmText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  selectedAmPmText: {
+    fontWeight: 'bold',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#2A2A3C',
+  },
+  cancelButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  applyButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#FF5733',
+  },
+  applyButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
