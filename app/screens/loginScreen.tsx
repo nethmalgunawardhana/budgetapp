@@ -18,16 +18,16 @@ import * as Google from 'expo-auth-session/providers/google';
 import { AuthService } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as AuthSession from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
-
-
 const { width } = Dimensions.get('window');
 
-const LoginScreen: React.FC= () => {
+const LoginScreen: React.FC = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -44,6 +44,12 @@ const LoginScreen: React.FC= () => {
   useEffect(() => {
     if (response?.type === 'success') {
       handleGoogleSignIn(response.authentication?.accessToken);
+    } else if (response?.type === 'error' || response?.type === 'dismiss') {
+      // Reset loading state if authentication fails or is cancelled
+      setGoogleAuthLoading(false);
+      if (response?.type === 'error') {
+        Alert.alert('Authentication Error', 'Failed to authenticate with Google.');
+      }
     }
   }, [response]);
 
@@ -65,11 +71,11 @@ const LoginScreen: React.FC= () => {
 
   const handleGoogleSignIn = async (googleToken?: string) => {
     if (!googleToken) {
+      setGoogleAuthLoading(false);
       Alert.alert('Error', 'Failed to obtain Google token');
       return;
     }
 
-    setLoading(true);
     try {
       await AuthService.googleSignIn(googleToken);
       router.replace('../tabs/tabbar');
@@ -79,8 +85,7 @@ const LoginScreen: React.FC= () => {
         'Failed to sign in with Google. Please try again.'
       );
       Alert.alert('Google Sign-In Error', errorMessage);
-    } finally {
-      setLoading(false);
+      setGoogleAuthLoading(false);
     }
   };
 
@@ -129,10 +134,12 @@ const LoginScreen: React.FC= () => {
 
   const initiateGoogleSignIn = async () => {
     try {
+      setGoogleAuthLoading(true);
       await promptAsync();
     } catch (error) {
       console.error('Google Sign-In Initiation Error:', error);
       Alert.alert('Error', 'Failed to initiate Google Sign-In');
+      setGoogleAuthLoading(false);
     }
   };
 
@@ -140,118 +147,125 @@ const LoginScreen: React.FC= () => {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       
-        <Animated.View 
-          style={[
-            styles.contentContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Image 
-            source={require('../../assets/images/logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
+      {/* Loading overlay for Google authentication */}
+      {googleAuthLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#7a4ecf" />
+          <Text style={styles.loadingText}>Authenticating with Google...</Text>
+        </View>
+      )}
+      
+      <Animated.View 
+        style={[
+          styles.contentContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}
+      >
+        <Image 
+          source={require('../../assets/images/logo.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Log in to continue</Text>
+
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#A9A9A9"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Log in to continue</Text>
-
-          <View style={styles.formContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor="#A9A9A9"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#A9A9A9"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            
-            {errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            ) : null}
-            
-            <TouchableOpacity 
-              style={styles.loginButton}
-              onPress={handleEmailLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Text style={styles.loginButtonText}>Log In</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#A9A9A9"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
           
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.divider} />
-          </View>
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
           
-          <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={handleEmailLogin}
+            disabled={loading || googleAuthLoading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text style={styles.loginButtonText}>Log In</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.divider} />
+        </View>
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.googleButton, googleAuthLoading && styles.disabledButton]}
+            onPress={initiateGoogleSignIn}
+            disabled={loading || googleAuthLoading}
+          >
+            <Image 
+              source={require('../../assets/images/google-icon.png')} 
+              style={styles.googleIcon} 
+            />
+            <Text style={styles.googleButtonText}>
+              Continue With Google
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.serviceProviderButton}
+            onPress={navigateToServiceProviderLogin}
+            disabled={loading || googleAuthLoading}
+          >
+            <Image 
+              source={require('../../assets/images/handyman.png')} 
+              style={styles.serviceIcon} 
+            />
+            <Text style={styles.serviceButtonText}>
+              Login as Service Provider
+            </Text>
+          </TouchableOpacity>
+          
+          <View style={styles.bottomLinks}>
             <TouchableOpacity 
-              style={styles.googleButton}
-              onPress={initiateGoogleSignIn}
-              disabled={loading}
+              style={styles.signUpLink}
+              onPress={navigateToSignUp}
             >
-              <Image 
-                source={require('../../assets/images/google-icon.png')} 
-                style={styles.googleIcon} 
-              />
-              <Text style={styles.googleButtonText}>
-                Continue With Google
+              <Text style={styles.signUpText}>
+                Don't have an account? <Text style={styles.signUpBold}>Sign Up</Text>
               </Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.serviceProviderButton}
-              onPress={navigateToServiceProviderLogin}
-              disabled={loading}
+              style={styles.signUpLink}
+              onPress={navigateToServiceProviderSignUp}
             >
-              <Image 
-                source={require('../../assets/images/handyman.png')} 
-                style={styles.serviceIcon} 
-              />
-              <Text style={styles.serviceButtonText}>
-                Login as Service Provider
+              <Text style={styles.signUpText}>
+                Register as Service Provider
               </Text>
             </TouchableOpacity>
-            
-            <View style={styles.bottomLinks}>
-              <TouchableOpacity 
-                style={styles.signUpLink}
-                onPress={navigateToSignUp}
-              >
-                <Text style={styles.signUpText}>
-                  Don't have an account? <Text style={styles.signUpBold}>Sign Up</Text>
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.signUpLink}
-                onPress={navigateToServiceProviderSignUp}
-              >
-                <Text style={styles.signUpText}>
-                  Register as Service Provider
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </Animated.View>
-     
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -402,6 +416,25 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(30, 20, 35, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 15,
+    fontSize: 16,
+  },
+  disabledButton: {
+    opacity: 0.7,
+  }
 });
 
 export default LoginScreen;
